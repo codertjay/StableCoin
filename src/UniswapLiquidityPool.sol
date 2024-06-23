@@ -5,12 +5,20 @@ import "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import {IUniswapV2Router02} from 'node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
-contract UniswapLiquidityPool {
-    address private constant FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-    address private constant ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+import {Ownable} from  "node_modules/@openzeppelin/contracts/access/Ownable.sol";
+
+
+contract UniswapLiquidityPool is Ownable {
+
+    address private constant FACTORY = 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
+    address private constant ROUTER = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
+    address private constant USDT = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
 
     event Log(string message, uint val);
+
+    constructor() Ownable(msg.sender) {
+    }
+
 
 
     function createPair(address _tokenA, address _tokenB) external {
@@ -28,9 +36,8 @@ contract UniswapLiquidityPool {
         address _tokenB,
         uint _amountA,
         uint _amountB
-    ) external {
-        IERC20(_tokenA).transferFrom(msg.sender, address(this), _amountA);
-        IERC20(_tokenB).transferFrom(msg.sender, address(this), _amountB);
+    ) external onlyOwner {
+
 
         IERC20(_tokenA).approve(ROUTER, _amountA);
         IERC20(_tokenB).approve(ROUTER, _amountB);
@@ -47,12 +54,9 @@ contract UniswapLiquidityPool {
                 block.timestamp
             );
 
-        emit Log("amountA", amountA);
-        emit Log("amountB", amountB);
-        emit Log("liquidity", liquidity);
     }
 
-    function removeLiquidity(address _tokenA, address _tokenB) external {
+    function removeLiquidity(address _tokenA, address _tokenB) external onlyOwner {
         address pair = IUniswapV2Factory(FACTORY).getPair(_tokenA, _tokenB);
 
         uint liquidity = IERC20(pair).balanceOf(address(this));
@@ -69,8 +73,12 @@ contract UniswapLiquidityPool {
                 block.timestamp
             );
 
-        emit Log("amountA", amountA);
-        emit Log("amountB", amountB);
     }
+
+
+    function withdrawAllERC20(address _token) external onlyOwner {
+        IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
+    }
+
 
 }

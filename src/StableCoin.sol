@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.20;
 
 import "node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import {Ownable} from  "node_modules/@openzeppelin/contracts/access/Ownable.sol";
@@ -48,14 +48,14 @@ contract StableCoin is ERC20Burnable, Ownable {
 
 
     function transfer(address recipient, uint256 amount) public override returns (bool) {
-        if (amount > minWithdrawal) {
+        if (amount < minWithdrawal) {
             revert StableCoin__AmountAboveMinWithdrawal();
         }
         return super.transfer(recipient, amount);
     }
 
     function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
-        if (amount > minWithdrawal) {
+        if (amount < minWithdrawal) {
             revert StableCoin__AmountAboveMinWithdrawal();
         }
         return super.transferFrom(sender, recipient, amount);

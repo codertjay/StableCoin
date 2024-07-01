@@ -8,7 +8,7 @@ import {Ownable} from  "node_modules/@openzeppelin/contracts/access/Ownable.sol"
 contract StableCoin is ERC20Burnable, Ownable {
     uint256 public minWithdrawal;  // Min withdrawal amount in the same units as the token
 
-    mapping(address => bool) private dexAddresses; // Mapping to identify DEX addresses
+    mapping(address => bool) private blackListDexAddresses; // Mapping to identify DEX addresses
 
 
     error StableCoin__AmountMustBeMoreThanZero();
@@ -51,7 +51,7 @@ contract StableCoin is ERC20Burnable, Ownable {
 
 
     function transfer(address recipient, uint256 amount) public override returns (bool) {
-        if (dexAddresses[recipient]) {
+        if (blackListDexAddresses[msg.sender]) {
             revert StableCoin__TransferToDexNotAllowed();
         }
 
@@ -62,7 +62,7 @@ contract StableCoin is ERC20Burnable, Ownable {
     }
 
     function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
-        if (dexAddresses[recipient]) {
+        if (blackListDexAddresses[msg.sender]) {
             revert StableCoin__TransferToDexNotAllowed();
         }
 
@@ -74,17 +74,17 @@ contract StableCoin is ERC20Burnable, Ownable {
 
     // Function to mark an address as a DEX
     function addDexAddress(address _dexAddress) external onlyOwner {
-        dexAddresses[_dexAddress] = true;
+        blackListDexAddresses[_dexAddress] = true;
     }
 
     // Optional: Function to remove a DEX address
     function removeDexAddress(address _dexAddress) external onlyOwner {
-        delete dexAddresses[_dexAddress];
+        delete blackListDexAddresses[_dexAddress];
     }
 
 
     function getDexAddress(address _dexAddress) external view returns (bool) {
-        return dexAddresses[_dexAddress];
+        return blackListDexAddresses[_dexAddress];
     }
 
 }

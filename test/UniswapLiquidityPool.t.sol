@@ -11,6 +11,8 @@ contract UniswapLiquidityPoolTest is Test {
     UniswapLiquidityPool uniswapLiquidityPool;
 
     address private constant EXTERNAL_TOKEN = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
+    address private constant ROUTER = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
+
     StableCoin stableCoin;
     StableCoin stableCoin2;
 
@@ -111,6 +113,33 @@ contract UniswapLiquidityPoolTest is Test {
         // This is the swapping of the token part
 
         IERC20(address(stableCoin)).approve(address(uniswapLiquidityPool), 10e18);
+        uniswapLiquidityPool.swapToken(address(stableCoin), address(stableCoin2), 10e18);
+        vm.stopBroadcast();
+    }
+
+
+    function testSwapFailedTokens() public {
+        vm.startBroadcast(user);
+
+        uniswapLiquidityPool.createPair(address(stableCoin), address(stableCoin2));
+
+
+        IERC20(address(stableCoin)).approve(address(uniswapLiquidityPool), 200e18);
+        IERC20(address(stableCoin2)).approve(address(uniswapLiquidityPool), 200e18);
+
+        (uint tokenAmountA, uint tokenAmountB) = uniswapLiquidityPool.addLiquidity(address(stableCoin), address(stableCoin2), 200e18, 200e18);
+
+        // disable the router of quick swap from making transfer of token
+        stableCoin.addDexAddress(address(ROUTER));
+
+        // This is the swapping of the token part
+
+        IERC20(address(stableCoin)).approve(address(uniswapLiquidityPool), 10e18);
+        vm.expectRevert();
+        uniswapLiquidityPool.swapToken(address(stableCoin), address(stableCoin2), 10e18);
+
+        // unblock the dex address
+        stableCoin.removeDexAddress(address(ROUTER));
         uniswapLiquidityPool.swapToken(address(stableCoin), address(stableCoin2), 10e18);
         vm.stopBroadcast();
     }

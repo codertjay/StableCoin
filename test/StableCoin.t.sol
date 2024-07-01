@@ -57,11 +57,15 @@ contract StableCoinTest is Test {
 
 
     function testTransfer() public {
+
         uint256 _initialSupply = 10E18;
         uint256 _minWithdrawal = 10E18;
 
         vm.startBroadcast(user);
         stableCoin = new StableCoin(_initialSupply, _minWithdrawal);
+        stableCoin.setMinWithdrawal(1E18);
+
+
         stableCoin.transfer(address(this), 9E18);
         vm.stopBroadcast();
 
@@ -81,7 +85,7 @@ contract StableCoinTest is Test {
     }
 
 
-    function testTransferFrom() public {
+    function testTransferFromFailed() public {
         uint256 _initialSupply = 10E18;
         uint256 _minWithdrawal = 10E18;
 
@@ -96,6 +100,14 @@ contract StableCoinTest is Test {
         vm.stopBroadcast();
 
         assertEq(stableCoin.balanceOf(userB), 10E18);
+    }
+
+
+    function testAddDexAddress() public {
+        vm.startBroadcast(user);
+        stableCoin.addDexAddress(address(this));
+        vm.stopBroadcast();
+        assertEq(stableCoin.getDexAddress(address(this)), true);
     }
 
 }

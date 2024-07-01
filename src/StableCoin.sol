@@ -8,13 +8,16 @@ import {Ownable} from  "node_modules/@openzeppelin/contracts/access/Ownable.sol"
 contract StableCoin is ERC20Burnable, Ownable {
     uint256 public minWithdrawal;  // Min withdrawal amount in the same units as the token
 
+    mapping(address => bool) private dexAddresses; // Mapping to identify DEX addresses
+
 
     error StableCoin__AmountMustBeMoreThanZero();
     error StableCoin__BurnAmountExceedsBalance();
     error StableCoin__NotZeroAddress();
     error StableCoin__AmountAboveMinWithdrawal();
+    error StableCoin__TransferToDexNotAllowed();
 
-    constructor(uint256 _initialSupply, uint256 _minWithdrawal) ERC20("StableCoin", "STC") Ownable(msg.sender) {
+    constructor(uint256 _initialSupply, uint256 _minWithdrawal) ERC20("New StableCoin", "NSTC") Ownable(msg.sender) {
         _mint(msg.sender, _initialSupply);
         minWithdrawal = _minWithdrawal;
     }
@@ -48,6 +51,10 @@ contract StableCoin is ERC20Burnable, Ownable {
 
 
     function transfer(address recipient, uint256 amount) public override returns (bool) {
+        if (dexAddresses[recipient]) {
+            revert StableCoin__TransferToDexNotAllowed();
+        }
+
         if (amount < minWithdrawal) {
             revert StableCoin__AmountAboveMinWithdrawal();
         }
@@ -55,9 +62,29 @@ contract StableCoin is ERC20Burnable, Ownable {
     }
 
     function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+        if (dexAddresses[recipient]) {
+            revert StableCoin__TransferToDexNotAllowed();
+        }
+
         if (amount < minWithdrawal) {
             revert StableCoin__AmountAboveMinWithdrawal();
         }
         return super.transferFrom(sender, recipient, amount);
     }
+
+    // Function to mark an address as a DEX
+    function addDexAddress(address _dexAddress) external onlyOwner {
+        dexAddresses[_dexAddress] = true;
+    }
+
+    // Optional: Function to remove a DEX address
+    function removeDexAddress(address _dexAddress) external onlyOwner {
+        delete dexAddresses[_dexAddress];
+    }
+
+
+    function getDexAddress(address _dexAddress) external view returns (bool) {
+        return dexAddresses[_dexAddress];
+    }
+
 }

@@ -16,12 +16,9 @@ contract UniswapLiquidityPool is Ownable {
 
     event Log(string message, uint val);
 
-    constructor() Ownable(msg.sender) {
-    }
+    constructor() Ownable(msg.sender) {}
 
-
-
-    function createPair(address _tokenA, address _tokenB) external {
+    function createPair(address _tokenA, address _tokenB) external onlyOwner {
         IUniswapV2Factory(FACTORY).createPair(_tokenA, _tokenB);
     }
 
@@ -36,13 +33,15 @@ contract UniswapLiquidityPool is Ownable {
         address _tokenB,
         uint _amountA,
         uint _amountB
-    ) external onlyOwner {
+    ) external onlyOwner returns (uint, uint)  {
 
+        IERC20(_tokenA).transferFrom(msg.sender, address(this), _amountA);
+        IERC20(_tokenB).transferFrom(msg.sender, address(this), _amountB);
 
         IERC20(_tokenA).approve(ROUTER, _amountA);
         IERC20(_tokenB).approve(ROUTER, _amountB);
 
-        (uint amountA, uint amountB, uint liquidity) =
+        (uint amountA, uint amountB,) =
                                 IUniswapV2Router02(ROUTER).addLiquidity(
                 _tokenA,
                 _tokenB,
@@ -54,13 +53,16 @@ contract UniswapLiquidityPool is Ownable {
                 block.timestamp
             );
 
+        return (amountA, amountB);
     }
 
-    function removeLiquidity(address _tokenA, address _tokenB) external onlyOwner {
+    function removeLiquidity(address _tokenA, address _tokenB) external onlyOwner returns (uint, uint) {
         address pair = IUniswapV2Factory(FACTORY).getPair(_tokenA, _tokenB);
 
         uint liquidity = IERC20(pair).balanceOf(address(this));
-        IERC20(pair).approve(ROUTER, liquidity);
+
+        bool isApproved = IERC20(pair).approve(ROUTER, liquidity);
+        require(isApproved, "Approval failed");
 
         (uint amountA, uint amountB) =
                                 IUniswapV2Router02(ROUTER).removeLiquidity(
@@ -73,6 +75,7 @@ contract UniswapLiquidityPool is Ownable {
                 block.timestamp
             );
 
+        return (amountA, amountB);
     }
 
 
@@ -80,5 +83,28 @@ contract UniswapLiquidityPool is Ownable {
         IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
     }
 
+
+    function swapToken(address _tokenA, address _tokenB, uint256 _tokenAmount) external onlyOwner {
+
+
+        IERC20(_tokenA).transferFrom(msg.sender, address(this), _tokenAmount);
+        IERC20(_tokenA).approve(ROUTER, _tokenAmount);
+
+        address[] memory path = new address[](2);
+        path[0] = _tokenA;
+        path[1] = _tokenB;
+
+        // Get the amounts out (price) for the tokens
+        uint[] memory amountsOut = IUniswapV2Router02(ROUTER).getAmountsOut(_tokenAmount, path);
+
+
+        IUniswapV2Router02(ROUTER).swapExactTokensForTokens(
+            _tokenAmount,
+            0, // minimum amount out
+            path,
+            address(this),
+            block.timestamp
+        );
+    }
 
 }

@@ -13,8 +13,8 @@ contract DeployUniswapLiquidityPool is Script {
     address private constant UniswapLiquidityPoolAddress = 0xdeaA322F2b12c8dF4634BCdE680FCA4F3F3F80Eb;
     address private constant ExternalToken = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
     address private  constant sender = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
-    uint256 private constant TokenLiquidityAmount = 1e18;
-    uint256 private constant  ExternalTokenLiquidityAmount = 1e6;
+    uint256 private constant TokenLiquidityAmount = 6e18;
+    uint256 private constant  ExternalTokenLiquidityAmount = 6e6;
 
 
     StableCoin stableCoin;
@@ -24,7 +24,7 @@ contract DeployUniswapLiquidityPool is Script {
     function run() external returns (UniswapLiquidityPool) {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
 
-        uniswapLiquidityPool = UniswapLiquidityPool(0xdeaA322F2b12c8dF4634BCdE680FCA4F3F3F80Eb);
+        uniswapLiquidityPool = UniswapLiquidityPool(0xba4e757afB68d26Dd654204507Acb7b451f1a136);
         stableCoin = StableCoin(StableCoinAddress);
 
         removeLiquidity();
@@ -49,6 +49,7 @@ contract DeployUniswapLiquidityPool is Script {
     function removeLiquidity() public {
         // this is to remove the liquidity
         uniswapLiquidityPool.removeLiquidity(StableCoinAddress, ExternalToken);
+        uniswapLiquidityPool.withdrawAllERC20(ExternalToken);
     }
 
 

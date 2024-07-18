@@ -10,13 +10,15 @@ import {Ownable} from  "node_modules/@openzeppelin/contracts/access/Ownable.sol"
 
 contract UniswapLiquidityPool is Ownable {
 
-    address private constant FACTORY = 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
-    address private constant ROUTER = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
-    address private constant USDT = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
+    address private immutable FACTORY;
+    address private immutable ROUTER;
 
     event Log(string message, uint val);
 
-    constructor() Ownable(msg.sender) {}
+    constructor(address _factory, address _router) Ownable(msg.sender) {
+        FACTORY = _factory;
+        ROUTER = _router;
+    }
 
     function createPair(address _tokenA, address _tokenB) external onlyOwner {
         IUniswapV2Factory(FACTORY).createPair(_tokenA, _tokenB);
@@ -106,5 +108,10 @@ contract UniswapLiquidityPool is Ownable {
             block.timestamp
         );
     }
+
+
+
+
+
 
 }

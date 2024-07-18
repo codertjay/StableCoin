@@ -15,7 +15,9 @@ contract DeployStableCoin is Script {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         uint256 initialSupply = 129000 * 10 ** 18; // 1,000,000 tokens with 18 decimals
         uint256 minimumWithdrawal = 10E18; // 1 token with 18 decimals
-        StableCoin stableCoin = new StableCoin(initialSupply, minimumWithdrawal);
+        string memory tokenName = "DamnValuableToken";
+        string memory tokenSymbol = "DVT";
+        StableCoin stableCoin = new StableCoin(initialSupply, minimumWithdrawal, tokenName, tokenSymbol);
 
         stableCoin.mint(DeployerAddress, 100000 * 10 ** 18);
 

